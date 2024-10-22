@@ -1,9 +1,11 @@
 import random
 
 import streamlit as st
+import numpy as np
 
 from database import Database
 from wrapper import BaseQuestion
+from wrapper import MathProblemQuestion
 from wrapper import MultipleCorrectQuestion
 from wrapper import NoChoiceQuestion
 from wrapper import SingleCorrectQuestion
@@ -36,6 +38,7 @@ class Quiz:
             "score": 0,
             "seed": random.randint(0, 2_000_000),
             "selected_options": [],
+            "correct_ones": [],
             "submit_pressed": False,
             "answer_submitted": False
         }
@@ -66,11 +69,8 @@ class Quiz:
         st.session_state.answer_submitted = False
 
     @staticmethod
-    def _show_result_message(answers: list, selected_options: list):
-        counter = 0
-        for answer in answers:
-            if answer in selected_options:
-                counter += 1
+    def _show_result_message(answers: list, correct_ones: list):
+        counter = sum(correct_ones)
 
         if counter == len(answers):
             st.success(f"Correct answer")
@@ -79,10 +79,11 @@ class Quiz:
         else:
             st.warning(f"Partially correct answer. Should be: {answers}")
 
-    def _handle_question_display_and_logic(self, question: BaseQuestion) -> tuple[list, float]:
+    def _handle_question_display_and_logic(self, question: BaseQuestion) -> tuple[list, list[bool], float]:
         question_data = question.get_data()
 
         selected_options = []
+        correct_ones = []
         current_score = 0
 
         # Display the question and answer options
@@ -91,7 +92,40 @@ class Quiz:
         st.markdown("""___""")
 
         # Answer selection
-        if type(question) is SingleCorrectQuestion:
+        if type(question) is TrueFalseQuestion:
+            options = ["True", "False"]
+            options_lower = [x.lower() for x in options]
+            answer = question_data["answer"]
+
+            if st.session_state.answer_submitted:
+                user_choice = st.radio(
+                    label="radio",
+                    options=options,
+                    index=options.index(st.session_state.selected_options[0]),
+                    label_visibility="collapsed",
+                    disabled=True
+                )
+                self._show_result_message(
+                    answers=[options[options_lower.index(answer.lower())]],
+                    correct_ones=st.session_state.correct_ones
+                )
+
+            else:
+                user_choice = st.radio(
+                    label="radio",
+                    options=options,
+                    index=None,
+                    label_visibility="collapsed"
+                )
+                if user_choice:
+                    selected_options = [user_choice]
+                    correct_ones = [False]
+                    current_score = 0
+                    if user_choice.lower() == answer.lower():
+                        correct_ones = [True]
+                        current_score = 1
+
+        elif type(question) is SingleCorrectQuestion:
             options = question_data["options"]
             answer = question_data["answer"]
 
@@ -103,7 +137,7 @@ class Quiz:
                     label_visibility="collapsed",
                     disabled=True
                 )
-                self._show_result_message(answers=[answer], selected_options=st.session_state.selected_options)
+                self._show_result_message(answers=[answer], correct_ones=st.session_state.correct_ones)
 
             else:
                 user_choice = st.radio(
@@ -114,7 +148,11 @@ class Quiz:
                 )
                 if user_choice:
                     selected_options = [user_choice]
-                    current_score = 1 if user_choice == answer else 0
+                    correct_ones = [False]
+                    current_score = 0
+                    if user_choice == answer:
+                        correct_ones = [True]
+                        current_score = 1
 
         elif type(question) is MultipleCorrectQuestion:
             options = question_data["options"]
@@ -126,7 +164,7 @@ class Quiz:
                     value=x in st.session_state.selected_options,
                     disabled=True
                 ) for x in options]
-                self._show_result_message(answers=answers, selected_options=st.session_state.selected_options)
+                self._show_result_message(answers=answers, correct_ones=st.session_state.correct_ones)
             else:
                 user_choice = [st.checkbox(label=x) for x in options]
                 if sum(user_choice) > 0:
@@ -135,36 +173,14 @@ class Quiz:
                         if is_selected:
                             selected_options.append(options[i])
                             current_score += 1 if options[i] in answers else 0
+
+                    correct_ones = [False for _ in range(len(selected_options))]
+                    current_score = 0
+                    for i in range(len(selected_options)):
+                        if selected_options[i] in answers:
+                            correct_ones[i] = True
+                            current_score += 1
                     current_score /= len(answers)
-
-        elif type(question) is TrueFalseQuestion:
-            options = ["True", "False"]
-            options_lowercase = [x.lower() for x in options]
-            answer = question_data["answer"]
-
-            if st.session_state.answer_submitted:
-                user_choice = st.radio(
-                    label="radio",
-                    options=options,
-                    index=options_lowercase.index(st.session_state.selected_options[0]),
-                    label_visibility="collapsed",
-                    disabled=True
-                )
-                self._show_result_message(
-                    answers=[options[options_lowercase.index(answer)]],
-                    selected_options=[options[options_lowercase.index(x)] for x in st.session_state.selected_options]
-                )
-
-            else:
-                user_choice = st.radio(
-                    label="radio",
-                    options=options,
-                    index=None,
-                    label_visibility="collapsed"
-                )
-                if user_choice:
-                    selected_options = [user_choice.lower()]
-                    current_score = 1 if user_choice.lower() == answer else 0
 
         elif type(question) is NoChoiceQuestion:
             answer = question_data["answer"]
@@ -178,7 +194,7 @@ class Quiz:
                     label_visibility="collapsed",
                     disabled=True
                 )
-                self._show_result_message(answers=[answer], selected_options=st.session_state.selected_options)
+                self._show_result_message(answers=[answer], correct_ones=st.session_state.correct_ones)
 
             else:
                 user_choice = st.text_input(
@@ -189,9 +205,43 @@ class Quiz:
                 )
                 if user_choice:
                     selected_options = [user_choice]
-                    current_score = 1 if user_choice.lower() == answer.lower() else 0
+                    correct_ones = [False]
+                    current_score = 0
+                    if user_choice.lower() == answer.lower():
+                        correct_ones = [True]
+                        current_score = 1
 
-        return selected_options, current_score
+        elif type(question) is MathProblemQuestion:
+            answer = question_data["answer"]
+
+            if st.session_state.answer_submitted:
+                user_choice = st.text_input(
+                    label="text_input",
+                    value=st.session_state.selected_options[0],
+                    max_chars=256,
+                    placeholder="Input your answer",
+                    label_visibility="collapsed",
+                    disabled=True
+                )
+                self._show_result_message(answers=[answer], correct_ones=st.session_state.correct_ones)
+
+            else:
+                user_choice = st.text_input(
+                    label="text_input",
+                    max_chars=256,
+                    placeholder="Input your answer",
+                    label_visibility="collapsed",
+                )
+                if user_choice:
+                    selected_options = [user_choice]
+                    correct_ones = [False]
+                    current_score = 0
+                    if Wrapper.validate_number(data=user_choice) and Wrapper.validate_number(data=answer):
+                        if np.isclose(a=float(user_choice), b=float(answer), rtol=1e-4, atol=1e-4):
+                            correct_ones = [True]
+                            current_score = 1
+
+        return selected_options, correct_ones, current_score
 
     def _build_page(self):
         # Title and description and metric
@@ -215,7 +265,7 @@ class Quiz:
             progress_bar_value = (st.session_state.current_index + 1) / len(self.quiz)
             st.progress(progress_bar_value)
 
-            selected_options, current_score = self._handle_question_display_and_logic(question=question)
+            selected_options, correct_ones, current_score = self._handle_question_display_and_logic(question=question)
             st.markdown("""___""")
 
             # Submission button and response logic
@@ -228,6 +278,7 @@ class Quiz:
                     if len(selected_options):
                         st.session_state.answer_submitted = True
                         st.session_state.selected_options = selected_options
+                        st.session_state.correct_ones = correct_ones
                         st.session_state.score += current_score
                         st.rerun()
                     else:

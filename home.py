@@ -45,12 +45,12 @@ class Home:
         st.link_button(label="Go To Quiz", url=link)
 
     @staticmethod
-    def _togle_show_generator_flag():
+    def _toggle_show_generator_flag():
         st.session_state.show_generator = not st.session_state.show_generator
 
     def _show_history(self):
         st.title("Quiz History")
-        st.button(label="Go Back", on_click=self._togle_show_generator_flag)
+        st.button(label="Go Back", on_click=self._toggle_show_generator_flag)
 
         if len(st.session_state.quiz_pool):
             for name, link in st.session_state.quiz_pool[::-1]:
@@ -92,7 +92,7 @@ class Home:
             question_types = st.multiselect(
                 label=question_types_label,
                 options=config.ALLOWED_QUESTION_TYPES,
-                default=config.ALLOWED_QUESTION_TYPES[0]
+                default=config.ALLOWED_QUESTION_TYPES[1]
             )
             single_option_number = st.number_input(
                 label=single_option_number_label,
@@ -150,7 +150,7 @@ class Home:
                         self._display_quiz_link(link=link)
 
         if len(st.session_state.quiz_pool):
-            st.button(label="Show History", on_click=self._togle_show_generator_flag)
+            st.button(label="Show History", on_click=self._toggle_show_generator_flag)
 
     def run(self):
         if st.session_state.show_generator:

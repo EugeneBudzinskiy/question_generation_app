@@ -1,3 +1,4 @@
+import re
 import random
 from abc import ABC, abstractmethod
 from typing import Any
@@ -10,6 +11,17 @@ class BaseQuestion(ABC):
     @abstractmethod
     def get_data(self) -> dict[str, Any]:
         pass
+
+
+class TrueFalseQuestion(BaseQuestion):
+    def __init__(self, element: ElementTree.Element):
+        self._data = {
+            "text": element.find("text").text,
+            "answer": element.find("answers").find("answer").text
+        }
+
+    def get_data(self) -> dict[str, Any]:
+        return self._data
 
 
 class SingleCorrectQuestion(BaseQuestion):
@@ -36,7 +48,7 @@ class MultipleCorrectQuestion(BaseQuestion):
         return self._data
 
 
-class TrueFalseQuestion(BaseQuestion):
+class NoChoiceQuestion(BaseQuestion):
     def __init__(self, element: ElementTree.Element):
         self._data = {
             "text": element.find("text").text,
@@ -47,7 +59,7 @@ class TrueFalseQuestion(BaseQuestion):
         return self._data
 
 
-class NoChoiceQuestion(BaseQuestion):
+class MathProblemQuestion(BaseQuestion):
     def __init__(self, element: ElementTree.Element):
         self._data = {
             "text": element.find("text").text,
@@ -75,14 +87,16 @@ class Wrapper:
         question_type = element.find("type").text
 
         if question_type in config.ALLOWED_QUESTION_TYPES:
-            if question_type.lower() == "single correct":
+            if question_type.lower() == "true/false":
+                return TrueFalseQuestion(element=element)
+            elif question_type.lower() == "single correct":
                 return SingleCorrectQuestion(element=element)
             elif question_type.lower() == "multiple correct":
                 return MultipleCorrectQuestion(element=element)
-            elif question_type.lower() == "true/false":
-                return TrueFalseQuestion(element=element)
             elif question_type.lower() == "no choice":
                 return NoChoiceQuestion(element=element)
+            elif question_type.lower() == "math problem":
+                return MathProblemQuestion(element=element)
             else:
                 raise NotImplementedError(f"Question Type '{question_type}' has no implementation!")
         else:
@@ -100,3 +114,7 @@ class Wrapper:
     @staticmethod
     def xml_to_str(data: ElementTree.ElementTree) -> str:
         return ElementTree.tostring(data.getroot(), encoding="unicode", method="xml")
+
+    @staticmethod
+    def validate_number(data: str) -> bool:
+        return bool(re.match(r"^[+-]?([0-9]*[.])?[0-9]+$", data))
