@@ -9,7 +9,7 @@ DIFFICULTY_QUESTION_TYPE_DISTRIBUTION = {
     "Hard": {"True/False": 1, "Single Correct": 1, "Multiple Correct": 2, "No Choice": 4, "Math Problem": 4}
 }
 
-ANTHROPIC_MODEL_NAME = "claude-3-haiku-20240307"
+ANTHROPIC_MODEL_NAME = "claude-3-sonnet-20240229"
 
 TEXT_CHUNK_SIZE = 4096
 TEXT_CHUNK_OVERLAP = 256
@@ -144,7 +144,7 @@ Please follow these steps to solve the problem:
 4. Break down the solution into smaller steps.
 5. Write Python code to perform the necessary calculations.
 6. Execute the Python code and include the output.
-7. Provide the final short answer to the problem in form of singular value with no additional text.
+7. Provide the final answer to the problem as a float with no additional text.
 
 Format your output as follows:
 
