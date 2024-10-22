@@ -219,7 +219,7 @@ class Quiz:
                     label="text_input",
                     value=st.session_state.selected_options[0],
                     max_chars=256,
-                    placeholder="Input your answer",
+                    placeholder="Input your answer as a float",
                     label_visibility="collapsed",
                     disabled=True
                 )
@@ -229,7 +229,7 @@ class Quiz:
                 user_choice = st.text_input(
                     label="text_input",
                     max_chars=256,
-                    placeholder="Input your answer",
+                    placeholder="Input your answer as a float",
                     label_visibility="collapsed",
                 )
                 if user_choice:

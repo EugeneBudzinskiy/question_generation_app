@@ -14,8 +14,7 @@ class Chain:
         )
 
         question_generation_template = ChatPromptTemplate([
-            ("system", config.QUESTION_GENERATION_SYSTEM_PROMPT),
-            ("user", config.QUESTION_GENERATION_REQUEST_PROMPT)
+            ("user", config.QUESTION_GENERATION_PROMPT)
         ])
 
         math_solver_template = ChatPromptTemplate([
@@ -30,11 +29,13 @@ class Chain:
                             question_types: list[str], single_option_number: int, multiple_option_number: int) -> str:
         return self._question_generation_chain.invoke({
             "document": document,
-            "question_number_per_type": question_number_per_type,
+            "allowed_question_types": config.ALLOWED_QUESTION_TYPES,
+            "allowed_difficulty_levels": config.ALLOWED_DIFFICULTY_LEVELS,
             "difficulty": difficulty,
             "question_types": question_types,
             "single_option_number": single_option_number,
-            "multiple_option_number": multiple_option_number
+            "multiple_option_number": multiple_option_number,
+            "question_number_per_type": question_number_per_type
         })
 
     def math_solver(self, math_problem: str) -> str:
