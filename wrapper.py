@@ -1,4 +1,3 @@
-import re
 import random
 from abc import ABC, abstractmethod
 from typing import Any
@@ -116,5 +115,5 @@ class Wrapper:
         return ElementTree.tostring(data.getroot(), encoding="unicode", method="xml")
 
     @staticmethod
-    def validate_number(data: str) -> bool:
-        return bool(re.match(r"^[+-]?([0-9]*[.])?[0-9]+$", data))
+    def get_float_regexp() -> str:
+        return r"[+-]?([0-9]*[.])?[0-9]+"

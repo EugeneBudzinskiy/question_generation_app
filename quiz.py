@@ -1,3 +1,4 @@
+import re
 import random
 
 import streamlit as st
@@ -236,8 +237,12 @@ class Quiz:
                     selected_options = [user_choice]
                     correct_ones = [False]
                     current_score = 0
-                    if Wrapper.validate_number(data=user_choice) and Wrapper.validate_number(data=answer):
-                        if np.isclose(a=float(user_choice), b=float(answer), rtol=1e-4, atol=1e-4):
+                    user_choice_val = re.search(pattern=Wrapper.get_float_regexp(), string=user_choice)
+                    answer_val = re.search(pattern=Wrapper.get_float_regexp(), string=answer)
+                    if user_choice_val and answer_val:
+                        user_choice_val = user_choice_val.group()
+                        answer_val = answer_val.group()
+                        if np.isclose(a=float(user_choice_val), b=float(answer_val), rtol=1e-4, atol=1e-4):
                             correct_ones = [True]
                             current_score = 1
 

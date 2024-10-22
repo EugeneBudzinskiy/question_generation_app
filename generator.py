@@ -30,8 +30,9 @@ class Generator:
         answer_stop = model_answer.find(answer_tags[1])
         if answer_start > -1 and answer_stop > -1:
             possible_answer = model_answer[answer_start:answer_stop]
-            if Wrapper.validate_number(data=possible_answer):
-                answer = possible_answer
+            possible_answer = re.search(pattern=Wrapper.get_float_regexp(), string=possible_answer)
+            if possible_answer:
+                answer = possible_answer.group()
         return answer
 
     def add_answer_to_math_problems(self, questions: ElementTree.ElementTree) -> ElementTree.ElementTree:

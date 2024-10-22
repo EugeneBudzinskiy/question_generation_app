@@ -9,7 +9,7 @@ DIFFICULTY_QUESTION_TYPE_DISTRIBUTION = {
     "Hard": {"True/False": 1, "Single Correct": 1, "Multiple Correct": 2, "No Choice": 4, "Math Problem": 4}
 }
 
-ANTHROPIC_MODEL_NAME = "claude-3-sonnet-20240229"
+ANTHROPIC_MODEL_NAME = "claude-3-haiku-20240307"
 
 TEXT_CHUNK_SIZE = 4096
 TEXT_CHUNK_OVERLAP = 256
@@ -85,6 +85,8 @@ For each question, follow these steps:
 8. For 'Math Problem' questions:
    a. Create a detailed problem description with context from the document.
    b. Include all necessary information for solving the problem.
+   c. The problem should be related to the content of the text and should require mathematical reasoning to solve. 
+   d. The problem should be challenging but solvable with basic to intermediate math skills
    c. Ensure the problem complexity matches the specified difficulty level.
 9. Review the question to ensure it:
    a. Accurately reflects the document content.
